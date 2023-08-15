@@ -11,15 +11,8 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public class Util {
-    // реализуйте настройку соеденения с БД
-    private static Connection connection;
-
-    public static Connection getConnection() throws SQLException {
-        connection = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/usersdatabase", "root", "root");
-        return connection;
-    }
-
     private static final SessionFactory hibernateSessionFactory;
+    private static Connection connection;
 
     static {
         try {
@@ -40,6 +33,11 @@ public class Util {
         } catch (Exception ex) {
             throw new ExceptionInInitializerError(ex);
         }
+    }
+
+    public static Connection getConnection() throws SQLException {
+        connection = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/usersdatabase", "root", "root");
+        return connection;
     }
 
     public static Session getSession() throws HibernateException {

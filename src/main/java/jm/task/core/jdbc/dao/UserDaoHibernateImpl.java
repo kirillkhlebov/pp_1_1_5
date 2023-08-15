@@ -6,6 +6,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
+import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,7 @@ public class UserDaoHibernateImpl implements UserDao {
                     "  PRIMARY KEY (`id`));").executeUpdate();
             transaction.commit();
             System.out.println("Users table is created");
-        } catch (javax.persistence.PersistenceException e) {
+        } catch (PersistenceException e) {
             System.out.println("Users table is already exist");
         }
     }
@@ -39,37 +40,41 @@ public class UserDaoHibernateImpl implements UserDao {
             session.createSQLQuery("DROP TABLE users;").executeUpdate();
             transaction.commit();
             System.out.println("Users table is deleted");
-        } catch (javax.persistence.PersistenceException e) {
+        } catch (PersistenceException e) {
             System.out.println("There is no Users table in database");
         }
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
+        Transaction transaction = null;
         try (Session session = Util.getSession()) {
-            Transaction transaction = session.beginTransaction();
-            Query query = session.createSQLQuery("INSERT INTO users (`name`, `last_name`, `age`) VALUES (?, ?, ?);");
-            query.setParameter(1, name);
-            query.setParameter(2, lastName);
-            query.setParameter(3, age);
-            query.executeUpdate();
+            transaction = session.beginTransaction();
+            session.createSQLQuery("INSERT INTO users (`name`, `last_name`, `age`) VALUES (?, ?, ?);")
+                    .setParameter(1, name)
+                    .setParameter(2, lastName)
+                    .setParameter(3, age)
+                    .executeUpdate();
             transaction.commit();
             System.out.printf("User with name - %s is added to database%n", name);
         } catch (HibernateException e) {
+            transaction.rollback();
             e.printStackTrace();
         }
     }
 
     @Override
     public void removeUserById(long id) {
+        Transaction transaction = null;
         try (Session session = Util.getSession()) {
-            Transaction transaction = session.beginTransaction();
-            Query query = session.createSQLQuery("DELETE FROM users WHERE `id` = ?;");
-            query.setParameter(1, id);
-            query.executeUpdate();
+            transaction = session.beginTransaction();
+            session.createQuery("DELETE User where id = :param")
+                    .setParameter("param", id)
+                    .executeUpdate();
             transaction.commit();
             System.out.printf(String.format("User with id = %d is deleted", id));
         } catch (HibernateException e) {
+            transaction.rollback();
             e.printStackTrace();
         }
     }
@@ -90,12 +95,14 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void cleanUsersTable() {
+        Transaction transaction = null;
         try (Session session = Util.getSession()) {
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
             session.createSQLQuery("DELETE FROM users;").executeUpdate();
             transaction.commit();
             System.out.println("All rows from Users table are removed");
         } catch (HibernateException e) {
+            transaction.rollback();
             e.printStackTrace();
         }
     }
