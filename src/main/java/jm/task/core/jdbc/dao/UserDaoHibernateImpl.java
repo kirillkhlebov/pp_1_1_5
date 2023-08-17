@@ -50,15 +50,13 @@ public class UserDaoHibernateImpl implements UserDao {
         Transaction transaction = null;
         try (Session session = Util.getSession()) {
             transaction = session.beginTransaction();
-            session.createSQLQuery("INSERT INTO users (`name`, `last_name`, `age`) VALUES (?, ?, ?);")
-                    .setParameter(1, name)
-                    .setParameter(2, lastName)
-                    .setParameter(3, age)
-                    .executeUpdate();
+            session.persist(new User(name, lastName, age));
             transaction.commit();
             System.out.printf("User with name - %s is added to database%n", name);
         } catch (HibernateException e) {
-            transaction.rollback();
+            if (transaction != null) {
+                transaction.rollback();
+            }
             e.printStackTrace();
         }
     }
@@ -68,13 +66,15 @@ public class UserDaoHibernateImpl implements UserDao {
         Transaction transaction = null;
         try (Session session = Util.getSession()) {
             transaction = session.beginTransaction();
-            session.createQuery("DELETE User where id = :param")
-                    .setParameter("param", id)
+            session.createQuery("delete User where id = :id")
+                    .setParameter("id", id)
                     .executeUpdate();
             transaction.commit();
             System.out.printf(String.format("User with id = %d is deleted", id));
         } catch (HibernateException e) {
-            transaction.rollback();
+            if (transaction != null) {
+                transaction.rollback();
+            }
             e.printStackTrace();
         }
     }
@@ -102,7 +102,9 @@ public class UserDaoHibernateImpl implements UserDao {
             transaction.commit();
             System.out.println("All rows from Users table are removed");
         } catch (HibernateException e) {
-            transaction.rollback();
+            if (transaction != null) {
+                transaction.rollback();
+            }
             e.printStackTrace();
         }
     }
